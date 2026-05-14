@@ -1,38 +1,32 @@
 // content.js
 
-const NEXUS_SURFACE_DARK = "#1c1b19";
-const NEXUS_TEAL = "#4f98a3";
-const COOL_BLUE = "#c6d8e4";
-const WARM_YELLOW = "#e8af34";
-const HOT_RED = "#dd6974";
-
 let heatmapEnabled = false;
 
-// Parse owner, repo, ref, path from URL like /owner/repo/blob/ref/path/to/file
 function parseGitHubBlobUrl() {
   const { pathname } = window.location;
   const parts = pathname.split("/").filter(Boolean);
-
-  // Expected: ["owner", "repo", "blob", "ref", "path", "to", "file"]
-  if (parts.length < 5 || parts[2] !== "blob") {
-    return null;
-  }
-
-  const owner = parts[0];
-  const repo = parts[1];
-  const ref = parts[3];
-  const path = parts.slice(4).join("/");
-
-  return { owner, repo, ref, path };
+  if (parts.length < 5 || parts[2] !== "blob") return null;
+  return {
+    owner: parts[0],
+    repo: parts[1],
+    ref: parts[3],
+    path: parts.slice(4).join("/")
+  };
 }
 
-// Inject toggle button next to "Blame"
 function injectToggleButton() {
-  // GitHub toolbar container near Raw / Blame
-  const toolbar = document.querySelector(".BlobToolbar .BtnGroup") ||
-                  document.querySelector("div.d-flex.flex-items-center.mb-3 .BtnGroup");
+  if (document.querySelector("#blame-heatmap-toggle")) return;
 
-  if (!toolbar || document.querySelector("#blame-heatmap-toggle")) {
+  // Try multiple selectors — GitHub updates its UI frequently
+  const toolbar =
+    document.querySelector(".react-blob-header-edit-and-raw-actions") ||
+    document.querySelector(".BlobToolbar") ||
+    document.querySelector("[data-testid='blob-raw-button']")?.closest("div") ||
+    document.querySelector(".d-flex.flex-items-center.gap-2") ||
+    document.querySelector("div[class*='BlobToolbar']");
+
+  if (!toolbar) {
+    console.warn("Blame Heatmap: toolbar not found on this page");
     return;
   }
 
@@ -40,14 +34,24 @@ function injectToggleButton() {
   btn.id = "blame-heatmap-toggle";
   btn.textContent = "🔥 Heat Map";
   btn.type = "button";
-  btn.className = "btn btn-sm BtnGroup-item"; // Reuse GitHub styles
-  btn.style.fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  btn.style.display = "inline-flex";
-  btn.style.alignItems = "center";
-  btn.style.gap = "4px";
+  btn.style.cssText = `
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(205,217,229,0.2);
+    background: #21262d;
+    color: #e6edf3;
+    cursor: pointer;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  `;
 
   btn.addEventListener("click", () => {
     heatmapEnabled = !heatmapEnabled;
+    btn.style.background = heatmapEnabled ? "#4f98a3" : "#21262d";
     if (heatmapEnabled) {
       startHeatmap();
     } else {
@@ -56,9 +60,9 @@ function injectToggleButton() {
   });
 
   toolbar.appendChild(btn);
+  console.log("Blame Heatmap: button injected ✅");
 }
 
-// Placeholder: we’ll implement the full heatmap next
 function startHeatmap() {
   const parsed = parseGitHubBlobUrl();
   if (!parsed) {
@@ -66,15 +70,13 @@ function startHeatmap() {
     return;
   }
   console.log("Blame Heatmap enabled for", parsed);
-  // Next step: send message to background, compute line scores, color borders, show legend
 }
 
 function clearHeatmap() {
   console.log("Blame Heatmap disabled");
-  // Next step: remove borders and legend
 }
 
-// Observe DOM in case GitHub SPA navigation changes file without full reload
+// Re-inject on GitHub SPA navigation
 const observer = new MutationObserver(() => {
   injectToggleButton();
 });
