@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blame Heatmap Options</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #0d1117;
+      color: #e6edf3;
+      padding: 16px;
+    }
+    label, input, button {
+      display: block;
+      width: 100%;
+      max-width: 480px;
+    }
+    input {
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+    button {
+      margin-top: 8px;
+      background-color: #4f98a3;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .note {
+      font-size: 0.85rem;
+      color: #8b949e;
+      max-width: 480px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Blame Heatmap Settings</h1>
+  <label for="token">GitHub Personal Access Token</label>
+  <input id="token" type="password" placeholder="ghp_..." autocomplete="off" />
+  <button id="save">Save Token</button>
+  <p class="note">
+    Token scope: <code>repo</code> (read). Store a token to access private repos and increase rate limits.
+  </p>
+  <p id="status" class="note"></p>
+  <script src="options.js"></script>
+</body>
+</html>
