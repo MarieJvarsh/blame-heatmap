@@ -306,6 +306,7 @@ function deactivateHeatmap() {
     const perLineCommits = perLineCommitSets.map((s) => s.size);
     const maxCommits     = perLineCommits.reduce((m, c) => Math.max(m, c), 0) || 1;
     const totalCommits   = commits ? commits.length : commitOidSet.size;
+    
 
     let hotspotLine    = 1;
     let hotspotCommits = 0;
@@ -405,19 +406,34 @@ function applyHeatmapToDom(lines, stats) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-      const aboveAvgCount = stats.perLineCommits.filter(c => c > stats.avgCommits).length;
-  const belowAvgCount = stats.lineCount - aboveAvgCount;
-  const values = stats.perLineCommits;
+// 1) Basic counts
+const values = stats.perLineCommits;
+
+// 2) Sparkline data
 const maxVal = values.reduce((m, v) => Math.max(m, v), 0) || 1;
 const normalized = values.map((v) => v / maxVal);
-
 const sparkWidth = 160;
 const sparkHeight = 30;
 const sparkPath = buildSparklinePath(normalized, sparkWidth, sparkHeight);
 
-const hotCount  = stats.perLineCommits.filter(c => c >= stats.p90 && c > 0).length;
-const warmCount = stats.perLineCommits.filter(c => c >= stats.p50 && c < stats.p90).length;
-const coolCount = stats.lineCount - hotCount - warmCount;
+// 3) Band logic using avg + max
+const avg = stats.avgCommits;
+const max = stats.maxCommits;
+
+// Hot: lines at the max count
+const hotCount  = values.filter((c) => c === max && c > 0).length;
+// Warm: between avg and max
+const warmCount = values.filter((c) => c > avg && c < max).length;
+// Cool: > 0 but ≤ avg
+const coolCount = values.filter((c) => c > 0 && c <= avg).length;
+
+// Above vs below/eq average
+const aboveAvgCount     = values.filter((c) => c > avg).length;
+const belowOrEqAvgCount = values.length - aboveAvgCount;
+
+//flat check
+const nonZeroCounts = new Set(values.filter((c) => c > 0));
+const isFlatHistory = nonZeroCounts.size <= 1;
 
 legend.innerHTML = `
   <div class="bhm-close" title="Close">✕</div>
@@ -446,16 +462,22 @@ legend.innerHTML = `
 
   <div class="bands">
     <div><strong>Bands</strong></div>
-    <div>Hot (top 10% ≥ ${stats.p90}): <strong>${hotCount}</strong> lines</div>
-    <div>Warm (mid 40% ≥ ${stats.p50}): <strong>${warmCount}</strong> lines</div>
-    <div>Cool (bottom 50%): <strong>${coolCount}</strong> lines</div>
+    <div>Hot (max ${max} commits): <strong>${hotCount}</strong> lines</div>
+    <div>Warm (> avg, &lt; max): <strong>${warmCount}</strong> lines</div>
+    <div>Cool (≤ avg, &gt; 0): <strong>${coolCount}</strong> lines</div>
   </div>
 
   <div class="avg-bucket">
     <div><strong>Above vs below average</strong></div>
     <div>Above avg: <strong>${aboveAvgCount}</strong> lines</div>
-    <div>At or below avg: <strong>${belowAvgCount}</strong> lines</div>
+    <div>At or below avg: <strong>${belowOrEqAvgCount}</strong> lines</div>
   </div>
+
+  ${
+    isFlatHistory
+      ? `<div class="flat-note">This file has very little history: all changed lines have the same commit count.</div>`
+      : ""
+  }
 
   ${
     top5.length

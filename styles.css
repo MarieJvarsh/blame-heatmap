@@ -5,9 +5,14 @@
   position: fixed;
   bottom: 16px;
   right: 16px;
-  width: 240px;
-  max-height: 380px;
+
+  /* Responsive sizing */
+  width: auto;
+  min-width: 260px;
+  max-width: 360px;
+  max-height: 70vh;      /* grows with viewport height */
   overflow-y: auto;
+
   background: rgba(28, 27, 25, 0.93);
   color: #e6edf3;
   border-radius: 8px;
@@ -121,4 +126,18 @@
 }
 .blame-heatmap-legend .sparkline svg {
   display: block;
+}
+
+@media (max-width: 900px) {
+  .blame-heatmap-legend {
+    left: 8px !important;
+    right: 8px !important;
+    max-width: none;
+  }
+}
+
+.blame-heatmap-legend .flat-note {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: #9a9997;
 }
