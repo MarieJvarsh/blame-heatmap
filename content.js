@@ -406,7 +406,14 @@ function applyHeatmapToDom(lines, stats) {
       .slice(0, 5);
 
       const aboveAvgCount = stats.perLineCommits.filter(c => c > stats.avgCommits).length;
-const belowAvgCount = stats.lineCount - aboveAvgCount;
+  const belowAvgCount = stats.lineCount - aboveAvgCount;
+  const values = stats.perLineCommits;
+const maxVal = values.reduce((m, v) => Math.max(m, v), 0) || 1;
+const normalized = values.map((v) => v / maxVal);
+
+const sparkWidth = 160;
+const sparkHeight = 30;
+const sparkPath = buildSparklinePath(normalized, sparkWidth, sparkHeight);
 
 const hotCount  = stats.perLineCommits.filter(c => c >= stats.p90 && c > 0).length;
 const warmCount = stats.perLineCommits.filter(c => c >= stats.p50 && c < stats.p90).length;
@@ -428,6 +435,14 @@ legend.innerHTML = `
     <div>Avg commits/line: <strong>${stats.avgCommits.toFixed(2)}</strong></div>
     <div>Hotspot: <strong>L${stats.hotspotLine}</strong> (${stats.hotspotCommits} commits)</div>
   </div>
+
+    <div class="sparkline">
+    <div style="font-size:0.75rem; margin-bottom:2px;">Commit density by line</div>
+    <svg width="${sparkWidth}" height="${sparkHeight}">
+      <path d="${sparkPath}" fill="none" stroke="${NEXUS_TEAL}" stroke-width="1.2" />
+    </svg>
+  </div>
+
 
   <div class="bands">
     <div><strong>Bands</strong></div>
@@ -475,6 +490,21 @@ function removeLegend() {
   if (legend && legend.parentNode) {
     legend.parentNode.removeChild(legend);
   }
+}
+
+function buildSparklinePath(normalizedValues, width, height) {
+  if (!normalizedValues.length) return "";
+
+  const n = normalizedValues.length;
+  const stepX = width / Math.max(n - 1, 1);
+
+  return normalizedValues
+    .map((v, i) => {
+      const x = i * stepX;
+      const y = height - v * height; // higher value -> lower y
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
 }
 
   function makeLegendDraggable(el) {

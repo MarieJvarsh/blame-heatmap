@@ -114,3 +114,11 @@
   z-index: 99999;
   line-height: 1.5;
 }
+
+.blame-heatmap-legend .sparkline {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+.blame-heatmap-legend .sparkline svg {
+  display: block;
+}
