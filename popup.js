@@ -1,30 +1,30 @@
 // popup.js
+(function () {
+  const info = document.getElementById("info");
 
-const info = document.getElementById("info");
+  document.getElementById("open-options").addEventListener("click", () => {
+    chrome.runtime.openOptionsPage();
+  });
 
-chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  const tab = tabs[0];
-  if (!tab || !tab.url || !tab.url.includes("github.com")) {
-    info.textContent = "This tab is not a GitHub file view.";
-    return;
-  }
-
-  chrome.tabs.sendMessage(
-    tab.id,
-    { type: "GET_CURRENT_HEATMAP_STATS" },
-    (response) => {
-      if (chrome.runtime.lastError) {
-        info.textContent = "Heatmap not active on this page.";
-        return;
-      }
-      if (!response || !response.active) {
-        info.textContent = "Heatmap not active on this page.";
-        return;
-      }
-
+  // Must go through background.js — popups cannot message content scripts directly in MV3.
+  chrome.runtime.sendMessage({ type: "POPUP_GET_STATS" }, (response) => {
+    if (chrome.runtime.lastError || !response || !response.active) {
       info.innerHTML =
-        `<div class="stat">Lines analyzed: <span class="accent">${response.linesAnalyzed}</span></div>` +
-        `<div class="stat">Hotspot line: <span class="accent">${response.hotspotLine}</span> (${response.hotspotCommits} commits)</div>`;
+        '<p class="inactive">Heatmap not active.<br>' +
+        'Open a GitHub file and click <strong style="color:#e6edf3">🔥 Heat Map</strong> in the toolbar.</p>';
+      return;
     }
-  );
-});
+
+    info.innerHTML = `
+      <div class="stat">Lines analysed: <strong>${response.linesAnalyzed}</strong></div>
+      <div class="stat">Total commits: <strong>${response.totalCommits}</strong></div>
+      <div class="stat">Hotspot: <strong>L${response.hotspotLine}</strong></div>
+      <div class="stat">Hotspot commits: <strong>${response.hotspotCommits}</strong></div>
+      <div class="scale-wrap">
+        <span class="scale-label">Cool</span>
+        <div class="scale-bar"></div>
+        <span class="scale-label">Hot</span>
+      </div>
+    `;
+  });
+})();

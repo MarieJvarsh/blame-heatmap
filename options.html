@@ -1,49 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Blame Heatmap Options</title>
+  <meta charset="UTF-8">
+  <title>Blame Heatmap — Options</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background-color: #0d1117;
+      background: #0d1117;
       color: #e6edf3;
-      padding: 16px;
+      padding: 28px 24px;
+      font-size: 14px;
+      line-height: 1.6;
     }
-    label, input, button {
+    h1 { font-size: 1.05rem; margin-bottom: 2px; }
+    .subtitle { font-size: 0.8rem; color: #8b949e; margin-bottom: 22px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px; }
+    input[type="password"], input[type="text"] {
       display: block;
       width: 100%;
-      max-width: 480px;
-    }
-    input {
-      margin-top: 4px;
+      max-width: 460px;
+      padding: 7px 11px;
+      background: #161b22;
+      border: 1px solid rgba(205,217,229,0.15);
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 0.85rem;
+      font-family: "SF Mono", Consolas, monospace;
+      outline: none;
+      transition: border-color 150ms;
       margin-bottom: 12px;
     }
+    input:focus { border-color: rgba(79,152,163,0.55); }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: 460px; }
     button {
-      margin-top: 8px;
-      background-color: #4f98a3;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
+      padding: 6px 15px;
+      border-radius: 6px;
+      border: 1px solid transparent;
       cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: background 140ms;
     }
-    .note {
-      font-size: 0.85rem;
-      color: #8b949e;
-      max-width: 480px;
+    #save  { background: #e8af34; color: #111; border-color: #e8af34; }
+    #save:hover { background: #f5c842; }
+    #clear { background: transparent; border-color: rgba(205,217,229,0.2); color: #8b949e; }
+    #clear:hover { color: #e6edf3; background: rgba(255,255,255,0.05); }
+    #status { font-size: 0.8rem; margin-left: 4px; }
+    hr { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 22px 0; max-width: 460px; }
+    .note { font-size: 0.8rem; color: #8b949e; max-width: 460px; }
+    .note code {
+      font-family: "SF Mono", Consolas, monospace;
+      background: rgba(255,255,255,0.07);
+      padding: 1px 5px;
+      border-radius: 4px;
     }
+    table { border-collapse: collapse; width: 100%; max-width: 460px; font-size: 0.8rem; margin-top: 10px; }
+    th, td { text-align: left; padding: 5px 10px; border: 1px solid rgba(255,255,255,0.08); }
+    th { background: rgba(255,255,255,0.04); color: #8b949e; }
   </style>
 </head>
 <body>
-  <h1>Blame Heatmap Settings</h1>
+  <h1>🔥 Blame Heatmap — Settings</h1>
+  <p class="subtitle">Stored in chrome.storage.sync — synced across your Chrome profile.</p>
+
   <label for="token">GitHub Personal Access Token</label>
-  <input id="token" type="password" placeholder="ghp_..." autocomplete="off" />
-  <button id="save">Save Token</button>
+  <input id="token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+
+  <div class="row">
+    <button id="save">Save token</button>
+    <button id="clear">Clear token</button>
+    <span id="status"></span>
+  </div>
+
+  <hr>
+
   <p class="note">
-    Token scope: <code>repo</code> (read). Store a token to access private repos and increase rate limits.
+    <strong>Why a token?</strong><br>
+    Without one: 60 API requests/hour (unauthenticated).<br>
+    With a token: 5,000 requests/hour.<br><br>
+    <strong>Required scopes:</strong><br>
+    Classic token → <code>public_repo</code> (or <code>repo</code> for private).<br>
+    Fine-grained → <strong>Contents: Read-only</strong> on the repositories you want.
   </p>
-  <p id="status" class="note"></p>
+
+  <table>
+    <thead><tr><th>Scenario</th><th>Rate limit</th></tr></thead>
+    <tbody>
+      <tr><td>No token (unauthenticated)</td><td>60 req/hour</td></tr>
+      <tr><td>Token (authenticated)</td><td>5,000 req/hour</td></tr>
+      <tr><td>GraphQL with token</td><td>5,000 points/hour</td></tr>
+    </tbody>
+  </table>
+
   <script src="options.js"></script>
 </body>
 </html>
