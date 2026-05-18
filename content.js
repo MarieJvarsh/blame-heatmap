@@ -108,26 +108,21 @@
     ].join(";");
 
 btn.addEventListener("click", () => {
-  heatmapEnabled = !heatmapEnabled;
-
   if (heatmapEnabled) {
-    // Visual ON state
-    btn.style.background   = "#1a3a3d";
-    btn.style.borderColor  = "rgba(79,152,163,0.6)";
-    btn.style.color        = NEXUS_TEAL;
-    btn.textContent        = "🔥 Heat Map ✓";
-
-    startHeatmap();
-  } else {
-    // Visual OFF state
-    btn.style.background   = "#21262d";
-    btn.style.borderColor  = "rgba(205,217,229,0.2)";
-    btn.style.color        = "#e6edf3";
-    btn.textContent        = "🔥 Heat Map";
-
-    clearHeatmap();
+    // Turn OFF via central helper
+    deactivateHeatmap();
+    return;
   }
-});    toolbar.appendChild(btn);
+
+  // Turn ON
+  heatmapEnabled = true;
+  btn.style.background   = "#1a3a3d";
+  btn.style.borderColor  = "rgba(79,152,163,0.6)";
+  btn.style.color        = NEXUS_TEAL;
+  btn.textContent        = "🔥 Heat Map ✓";
+  startHeatmap();
+}); 
+   toolbar.appendChild(btn);
     console.log("Blame Heatmap: button injected ✅");
   }
 
@@ -241,36 +236,40 @@ function getCodeLineElements() {
     );
   }
 
-  function resetButton() {
-    heatmapEnabled = false;
-    const btn = document.getElementById("blame-heatmap-toggle");
-    if (!btn) return;
-    btn.style.background  = "#21262d";
-    btn.style.borderColor = "rgba(205,217,229,0.2)";
-    btn.style.color       = "#e6edf3";
-    btn.textContent       = "🔥 Heat Map";
-  }
+function resetButton() {
+  const btn = document.getElementById("blame-heatmap-toggle");
+  if (!btn) return;
+  btn.style.background  = "#21262d";
+  btn.style.borderColor = "rgba(205,217,229,0.2)";
+  btn.style.color       = "#e6edf3";
+  btn.textContent       = "🔥 Heat Map";
+}
 
   // ── Heatmap off ───────────────────────────────────────────────────────────
-  function clearHeatmap() {
-    // Clear whichever elements were actually colored
-    const targets = activeLineEls
-      ? activeLineEls
-      : Array.from(document.querySelectorAll(
+function clearHeatmap() {
+  // Clear whichever elements were actually colored
+  const targets = activeLineEls
+    ? activeLineEls
+    : Array.from(
+        document.querySelectorAll(
           "td.blob-num, .react-code-view-line, .blob-code-inner, .js-file-line, table.highlight tr"
-        ));
-    targets.forEach((el) => {
-      el.style.borderLeft  = "";
-      el.style.paddingLeft = "";
-    });
-    activeLineEls = null;
-    removeLegend();
-    showBanner(null);
-    lineStats = null;
-    lastError = null;
-    console.log("Blame Heatmap: disabled");
-  }
-  function deactivateHeatmap() {
+        )
+      );
+
+  targets.forEach((el) => {
+    if (!el || !el.style) return;
+    el.style.borderLeft = "";
+    el.style.paddingLeft = "";
+  });
+
+  activeLineEls = null;
+  removeLegend();
+  showBanner(null);
+  lineStats = null;
+  lastError = null;
+  console.log("Blame Heatmap: disabled");
+}
+function deactivateHeatmap() {
   heatmapEnabled = false;
   clearHeatmap();
   resetButton();
@@ -469,14 +468,14 @@ legend.innerHTML = `
 `;
 
 legend.querySelector(".bhm-close").addEventListener("click", () => {
-  heatmapEnabled = false;
-  clearHeatmap();
-  resetButton();
-});  }
-
-  function removeLegend() {
-    document.querySelector(".blame-heatmap-legend")?.remove();
+  deactivateHeatmap();
+});} 
+function removeLegend() {
+  const legend = document.querySelector(".blame-heatmap-legend");
+  if (legend && legend.parentNode) {
+    legend.parentNode.removeChild(legend);
   }
+}
 
   function makeLegendDraggable(el) {
     let isDragging = false, startX, startY, startLeft, startTop;
